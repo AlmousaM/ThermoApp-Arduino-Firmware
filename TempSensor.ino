@@ -23,6 +23,7 @@ void setup()
 {
   Serial.begin(9600); // Initialize Serial with 9600 bps to transmit temp and recieve commands
   therm.begin(); // Initialize thermal IR sensor
+    Serial.setTimeout(100);
   therm.setUnit(TEMP_K); // Set the library's units Kelvin, which is the sensor output tempreture unit
   // use TEMP_F for fehrehite
   // TEMP_C for C.

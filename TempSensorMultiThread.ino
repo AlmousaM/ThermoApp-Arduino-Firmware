@@ -1,3 +1,5 @@
+#NOTE: this firmware is for testing puproses and won't work with ThermoApp. use the other firmware
+
 #include <Arduino_FreeRTOS.h>
 #include <Wire.h> // I2C library, required for MLX90614
 #include <SparkFunMLX90614.h> // SparkFunMLX90614 Arduino library

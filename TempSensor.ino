@@ -1,55 +1,38 @@
-/******************************************************************************
-MLX90614 temp sensor Arduino code
-
-
-This code reads from the MLX90614 and prints out ambient and object
-temperatures every 250 ms to the serial output.
-
-
-Using Sparksfun library:
-https://github.com/sparkfun/SparkFun_MLX90614_Arduino_Library
-******************************************************************************/
-
+#include <Adafruit_MLX90614.h>
 #include <Wire.h> // I2C library, required for MLX90614
-#include <SparkFunMLX90614.h> // SparkFunMLX90614 Arduino library
 
-IRTherm therm; // Create an IRTherm object to interface with the temp sensor
-
+Adafruit_MLX90614 therm = Adafruit_MLX90614(); //temp sensor object
+const int Laser_Pin=6;  //Laser Pin with PWM
 String incomeMessage; //serial output
 float newEmissivity; //serial output emissivity
-const int Laser_Pin=8;  //Laser Pin
 
-void setup()
-{
+void setup() {
+  // put your setup code here, to run once:
   Serial.begin(9600); // Initialize Serial with 9600 bps to transmit temp and recieve commands
+  Serial.setTimeout(100);
   therm.begin(); // Initialize thermal IR sensor
-    Serial.setTimeout(100);
-  therm.setUnit(TEMP_K); // Set the library's units Kelvin, which is the sensor output tempreture unit
-  // use TEMP_F for fehrehite
-  // TEMP_C for C.
   pinMode(Laser_Pin,OUTPUT); //laser pin as an output
-  digitalWrite(Laser_Pin, LOW); //laser turned off by defualt
+  analogWrite(Laser_Pin, 0); //laser turned off by defualt
+
 }
 
+void loop() {
 
-//main method
-void loop()
-{
   if(Serial.available()) //if there are incoming serial data from the Android app
   {
     SerialRecieved(); //parse incoming serial data
   }
 
-  // Call therm.read() to read object and ambient temperatures from the sensor.
-  if (therm.read()) // On success, read() will return 1, on fail 0.
-  {
-    // Use the object() and ambient() functions to grab the object and ambient
+  // Use the object() and ambient() functions to grab the object and ambient
   // temperatures.
-    Serial.print("Obj:," + String(therm.object(), 2) + ","); //display the object temp with 2 decimal places
-    Serial.print("Amb:," + String(therm.ambient(), 2)); //display the ambient temp with 2 decimal places
-    Serial.print('\n');
-  }
-  delay(250); //delay 250ms
+  Serial.print("Obj:," + String(therm.readObjectTempK()) + ","); //display the object temp 
+  Serial.print("Amb:," + String(therm.readAmbientTempK()) + ","); //display the ambient temp
+  Serial.print("EMS:," + String(therm.readEmissivity())); //read the emmissivity
+  Serial.print('\n');
+
+
+  delay(250);
+
 }
 
 
@@ -58,27 +41,25 @@ void SerialRecieved()
 {
   incomeMessage = Serial.readString(); //read the incoming serial data into a string
   newEmissivity = incomeMessage.toFloat(); //convert the incoming serial data to float if its convertable
+  Serial.print(String(newEmissivity)+ '\n');
   
   if (incomeMessage.startsWith("ON")) 
   {
     
-    digitalWrite(Laser_Pin, HIGH); //turn on laser
-    Serial.println("Laser on");
+    analogWrite(Laser_Pin, 10); //turn on laser
 
   }
 
   else if (incomeMessage.startsWith("OFF"))
   {
     
-    digitalWrite(Laser_Pin, LOW); //turn on laser
-    Serial.println("Laser off");
+    analogWrite(Laser_Pin, 0); //turn on laser
 
   }
 
-  else if(newEmissivity >= 0 || newEmissivity <= 1)
+  else if(newEmissivity > 0 && newEmissivity <= 1)
   {
-    therm.setEmissivity(newEmissivity);
-    Serial.println("Emissivity cahnged to " + String(newEmissivity));
+    therm.writeEmissivity(newEmissivity);
   }
 
 }
